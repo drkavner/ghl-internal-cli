@@ -6,6 +6,7 @@ Provides access to the internal GHL v2 API for:
   • Conversation AI (AskAI / AI Employees)
   • Voice AI
   • Knowledge Base
+  • Vibe AI
 
 Run as an MCP stdio server (default) or as a simple CLI if you prefer.
 """
@@ -233,8 +234,8 @@ TOOLS: List[Tool] = [
                     'type': 'string',
                     'description': 'Location ID (uses GHL_LOCATION_ID if omitted)',
                 },
-                'page': {'type': 'number', 'default': 1},
-                'pageSize': {'type': 'number', 'default': 20},
+                'page': {type: 'number', 'default': 1},
+                'pageSize': {type: 'number', 'default': 20},
             },
             'required': ['locationId'],
         },
@@ -245,7 +246,7 @@ TOOLS: List[Tool] = [
         inputSchema={
             'type': 'object',
             'properties': {
-                'agentId': {'type': 'string', 'description': 'Agent ID'},
+                'agentId': {type: 'string', 'description': 'Agent ID'},
                 'locationId': {
                     'type': 'string',
                     'description': 'Location ID (uses GHL_LOCATION_ID if omitted)',
@@ -280,8 +281,8 @@ TOOLS: List[Tool] = [
                     'description': 'Location ID (uses GHL_LOCATION_ID if omitted)',
                 },
                 'agentId': {type: 'string', 'description': 'Agent ID'},
-                'page': {'type': 'number', 'default': 1},
-                'pageSize': {'type': 'number', 'default': 20},
+                'page': {type: 'number', 'default': 1},
+                'pageSize': {type: 'number', 'default': 20},
             },
             'required': ['locationId', 'agentId'],
         },
@@ -358,6 +359,31 @@ TOOLS: List[Tool] = [
                 },
             },
             'required': ['knowledgeBaseId', 'locationId', 'urls'],
+        },
+    ),
+    # ----- Vibe AI -----
+    Tool(
+        name='ghl_vibe_ai_chat_get',
+        description='Get chat messages from a Vibe AI project',
+        inputSchema={
+            'type': 'object',
+            'properties': {
+                'projectId': {'type': 'string', 'description': 'Vibe AI project ID'},
+                'limit': {'type': 'string', 'default': '100'},
+                'offset': {'type': 'string', 'default': '0'},
+            },
+            'required': ['projectId'],
+        },
+    ),
+    Tool(
+        name='ghl_vibe_ai_sandbox_keepalive',
+        description='Keep Vibe AI sandbox alive',
+        inputSchema={
+            'type': 'object',
+            'properties': {
+                'projectId': {'type': 'string', 'description': 'Vibe AI project ID'},
+            },
+            'required': ['projectId'],
         },
     ),
 ]
@@ -564,6 +590,26 @@ async def handle_call_tool(name: str, arguments: Optional[Dict[str, Any]]) -> Li
                     'locationId': loc_id,
                     'urls': arguments.get('urls', []),
                 },
+            )
+            return [{'type': 'text', 'text': json.dumps(resp, indent=2)}]
+
+        # ----- Vibe AI -----
+        if name == 'ghl_vibe_ai_chat_get':
+            resp = await ghl_request(
+                'GET',
+                f'/vibe-ai/projects/{arguments.get("projectId")}/chat',
+                params={
+                    'limit': arguments.get('limit', '100'),
+                    'offset': arguments.get('offset', '0'),
+                },
+            )
+            return [{'type': 'text', 'text': json.dumps(resp, indent=2)}]
+
+        if name == 'ghl_vibe_ai_sandbox_keepalive':
+            resp = await ghl_request(
+                'GET',
+                f'/vibe-ai/projects/{arguments.get("projectId")}/sandbox/keep-alive',
+                params={},
             )
             return [{'type': 'text', 'text': json.dumps(resp, indent=2)}]
 

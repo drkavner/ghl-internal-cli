@@ -6,6 +6,7 @@
  *   • Conversation AI (AskAI / AI Employees)
  *   • Voice AI
  *   • Knowledge Base
+ *   • Vibe AI
  *
  * Runs as an MCP stdio server when invoked without arguments,
  * or as a simple CLI when a sub‑command is supplied.
@@ -360,6 +361,32 @@ const tools = [
       required: ['knowledgeBaseId', 'locationId', 'urls'],
     },
   },
+
+  // ----- Vibe AI -----
+  {
+    name: 'ghl_vibe_ai_chat_get',
+    description: 'Get chat messages from a Vibe AI project',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        projectId: { type: 'string', description: 'Vibe AI project ID' },
+        limit: { type: 'string', default: '100' },
+        offset: { type: 'string', default: '0' },
+      },
+      required: ['projectId'],
+    },
+  },
+  {
+    name: 'ghl_vibe_ai_sandbox_keepalive',
+    description: 'Keep Vibe AI sandbox alive',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        projectId: { type: 'string', description: 'Vibe AI project ID' },
+      },
+      required: ['projectId'],
+    },
+  },
 ];
 
 // -----------------------------------------------------------------------------
@@ -602,24 +629,40 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       };
     }
 
+    // ----- Vibe AI -----
+    if (name === 'ghl_vibe_ai_chat_get') {
+      const resp = await ghRequest(
+        'GET',
+        `/vibe-ai/projects/${args?.projectId}/chat`,
+        {
+          limit: args?.limit ?? '100',
+          offset: args?.offset ?? '0',
+        }
+      );
+      return {
+        content: [{ type: 'text', text: JSON.stringify(resp, null, 2) }],
+      };
+    }
+
+    if (name === 'ghl_vibe_ai_sandbox_keepalive') {
+      const resp = await ghRequest(
+        'GET',
+        `/vibe-ai/projects/${args?.projectId}/sandbox/keep-alive`,
+        {}
+      );
+      return {
+        content: [{ type: 'text', text: JSON.stringify(resp, null, 2) }],
+      };
+    }
+
     // Unknown tool
     return {
-      content: [
-        {
-          type: 'text',
-          text: `Unknown tool: ${name}`,
-        },
-      ],
+      content: [{ type: 'text', text: `Unknown tool: ${name}` }],
       isError: true,
     };
   } catch (err: any) {
     return {
-      content: [
-        {
-          type: 'text',
-          text: `Error: ${err.message ?? String(err)}`,
-        },
-      ],
+      content: [{ type: 'text', text: `Error: ${err.message ?? String(err)}` }],
       isError: true,
     };
   }
