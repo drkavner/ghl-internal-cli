@@ -9,6 +9,14 @@ Provides access to the internal GHL v2 API for:
   • Vibe AI
   • Funnels
   • Feature Flags
+  • Facebook Integration
+  • Chat Widget
+  • WhatsApp Phone Numbers
+  • Forms
+  • Custom Values
+  • Payments Currency
+  • Social Media Accounts
+  • Templates
 
 Run as an MCP stdio server (default) or as a simple CLI if you prefer.
 """
@@ -86,8 +94,8 @@ TOOLS: List[Tool] = [
                     'description': 'Location ID (uses GHL_LOCATION_ID if omitted)',
                 },
                 'agentName': {'type': 'string', 'description': 'Agent name'},
-                'agentPrompt': {'type': 'string', 'description': 'System prompt'},
-                'welcomeMessage': {'type': 'string', 'description': 'Welcome message'},
+                'agentPrompt': {type: 'string', 'description': 'System prompt'},
+                'welcomeMessage': {type: 'string', 'description': 'Welcome message'},
             },
             'required': ['locationId'],
         },
@@ -156,6 +164,17 @@ TOOLS: List[Tool] = [
         },
     ),
     Tool(
+        name='ghl_conversion_ai_get_agent',
+        description='Get a Conversation AI agent by ID (typo fix)',
+        inputSchema={
+            'type': 'object',
+            'properties': {
+                'agentId': {'type': 'string', 'description': 'Agent ID'},
+            },
+            'required': ['agentId'],
+        },
+    ),
+    Tool(
         name='ghl_conversation_ai_search_agents',
         description='Search Conversation AI agents',
         inputSchema={
@@ -172,18 +191,7 @@ TOOLS: List[Tool] = [
         inputSchema={
             'type': 'object',
             'properties': {
-                'agentId': {'type': 'string', 'description': 'Agent ID'},
-            },
-            'required': ['agentId'],
-        },
-    ),
-    Tool(
-        name='ghl_conversion_ai_get_agent',
-        description='Get a Conversation AI agent by ID (typo fix)',
-        inputSchema={
-            'type': 'object',
-            'properties': {
-                'agentId': {'type': 'string', 'description': 'Agent ID'},
+                'agentId': {type: 'string', 'description': 'Agent ID'},
             },
             'required': ['agentId'],
         },
@@ -274,7 +282,7 @@ TOOLS: List[Tool] = [
         inputSchema={
             'type': 'object',
             'properties': {
-                'agentId': {'type': 'string', 'description': 'Agent ID'},
+                'agentId': {type: 'string', 'description': 'Agent ID'},
                 'locationId': {
                     'type': 'string',
                     'description': 'Location ID (uses GHL_LOCATION_ID if omitted)',
@@ -429,6 +437,20 @@ TOOLS: List[Tool] = [
             'required': ['funnelId', 'stepName', 'stepType'],
         },
     ),
+    Tool(
+        name='ghl_funnel_geo_location',
+        description='Set geo-location targeting for a funnel',
+        inputSchema={
+            'type': 'object',
+            'properties': {
+                'funnelId': {'type': 'string', 'description': 'Funnel ID'},
+                'latitude': {'type': 'number', 'description': 'Latitude'},
+                'longitude': {'type': 'number', 'description': 'Longitude'},
+                'radius': {'type': 'number', 'description': 'Radius in meters'},
+            },
+            'required': ['funnelId', 'latitude', 'longitude', 'radius'],
+        },
+    ),
     # ----- Feature Flags -----
     Tool(
         name='ghl_feature_flags_get',
@@ -442,6 +464,125 @@ TOOLS: List[Tool] = [
                 },
             },
             'required': ['locationId'],
+        },
+    ),
+    # ----- Facebook Integration -----
+    Tool(
+        name='ghl_facebook_connection_get',
+        description='Get Facebook connection for a location',
+        inputSchema={
+            'type': 'object',
+            'properties': {
+                'locationId': {
+                    'type': 'string',
+                    'description': 'Location ID (uses GHL_LOCATION_ID if omitted)',
+                },
+            },
+            'required': ['locationId'],
+        },
+    ),
+    Tool(
+        name='ghl_facebook_linked_pages_get',
+        description='Get linked Facebook pages for a location',
+        inputSchema={
+            'type': 'object',
+            'parameters': {
+                'locationId': {
+                    'type': 'string',
+                    'description': 'Location ID (uses GHL_LOCATION_ID if omitted)',
+                },
+            },
+            'required': ['locationId'],
+        },
+    ),
+    # ----- Chat Widget -----
+    Tool(
+        name='ghl_chat_widget_get',
+        description='Get chat widget settings',
+        inputSchema={
+            'type': 'object',
+            'properties': {
+                'locationId': {
+                    'type': 'string',
+                    'description': 'Location ID (uses GHL_LOCATION_ID if omitted)',
+                },
+            },
+            'required': ['locationId'],
+        },
+    ),
+    # ----- WhatsApp Phone Numbers -----
+    Tool(
+        name='ghl_whatsapp_phone_numbers_get',
+        description='Get WhatsApp phone numbers for a location',
+        inputSchema={
+            'type': 'object',
+            'properties': {
+                'locationId': {
+                    'type': 'string',
+                    'description': 'Location ID (uses GHL_LOCATION_ID if omitted)',
+                },
+            },
+            'required': ['locationId'],
+        },
+    ),
+    # ----- Forms -----
+    Tool(
+        name='ghl_forms_get',
+        description='Get forms',
+        inputSchema={
+            'type': 'object',
+            'properties': {},
+            'required': [],
+        },
+    ),
+    # ----- Custom Values -----
+    Tool(
+        name='ghl_custom_values_get',
+        description='Get custom values for a location',
+        inputSchema={
+            'type': 'object',
+            'properties': {
+                'locationId': {
+                    'type': 'string',
+                    'description': 'Location ID (uses GHL_LOCATION_ID if omitted)',
+                },
+            },
+            'required': ['locationId'],
+        },
+    ),
+    # ----- Payments Currency -----
+    Tool(
+        name='ghl_payments_currency_get',
+        description='Get payment currencies',
+        inputSchema={
+            'type': 'object',
+            'properties': {},
+            'required': [],
+        },
+    ),
+    # ----- Social Media Accounts -----
+    Tool(
+        name='ghl_social_media_accounts_get',
+        description='Get social media accounts for a location',
+        inputSchema={
+            'type': 'object',
+            'properties': {
+                'locationId': {
+                    'type': 'string',
+                    'description': 'Location ID (uses GHL_LOCATION_ID if omitted)',
+                },
+            },
+            'required': ['locationId'],
+        },
+    ),
+    # ----- Templates -----
+    Tool(
+        name='ghl_templates_list',
+        description='Get list of templates',
+        inputSchema={
+            'type': 'object',
+            'properties': {},
+            'required': [],
         },
     ),
 ]
@@ -517,6 +658,14 @@ async def handle_call_tool(name: str, arguments: Optional[Dict[str, Any]]) -> Li
             )
             return [{'type': 'text', 'text': json.dumps(resp, indent=2)}]
 
+        if name == 'ghl_conversion_ai_get_agent':
+            # Note: Typo fix – this branch should be for get_agent
+            resp = await ghl_request(
+                'GET',
+                f'/conversation-ai/agent/{arguments.get("agentId")}',
+            )
+            return [{'type': 'text', 'text': json.dumps(resp, indent=2)}]
+
         if name == 'ghl_conversation_ai_search_agents':
             resp = await ghl_request(
                 'GET',
@@ -528,8 +677,7 @@ async def handle_call_tool(name: str, arguments: Optional[Dict[str, Any]]) -> Li
             )
             return [{'type': 'text', 'text': json.dumps(resp, indent=2)}]
 
-        if name == 'ghl_conversion_ai_get_agent':
-            # Note: Typo fix – this branch should be for get_agent
+        if name == 'ghl_conversation_ai_get_agent':
             resp = await ghl_request(
                 'GET',
                 f'/conversation-ai/agent/{arguments.get("agentId")}',
@@ -696,11 +844,106 @@ async def handle_call_tool(name: str, arguments: Optional[Dict[str, Any]]) -> Li
             )
             return [{'type': 'text', 'text': json.dumps(resp, indent=2)}]
 
+        if name == 'ghl_funnel_geo_location':
+            resp = await ghl_request(
+                'POST',
+                '/funnels/funnel/geo-location/',
+                json_data={
+                    'funnelId': arguments.get('funnelId'),
+                    'latitude': arguments.get('latitude'),
+                    'longitude': arguments.get('longitude'),
+                    'radius': arguments.get('radius'),
+                },
+            )
+            return [{'type': 'text', 'text': json.dumps(resp, indent=2)}]
+
         # ----- Feature Flags -----
         if name == 'ghl_feature_flags_get':
             resp = await ghl_request(
                 'GET',
                 f'/locations/{loc_id}/labs/featureFlags',
+                params={},
+            )
+            return [{'type': 'text', 'text': json.dumps(resp, indent=2)}]
+
+        # ----- Facebook Integration -----
+        if name == 'ghl_facebook_connection_get':
+            resp = await ghl_request(
+                'GET',
+                f'/integrations/facebook/{locId}/connection',
+                params={},
+            )
+            return [{'type': 'text', 'text': json.dumps(resp, indent=2)}]
+
+        if name == 'ghl_facebook_linked_pages_get':
+            resp = await ghl_request(
+                'GET',
+                f'/integrations/facebook/{locId}/linked-pages',
+                params={},
+            )
+            return [{'type': 'text', 'text': json.dumps(resp, indent=2)}]
+
+        # ----- Chat Widget -----
+        if name == 'ghl_chat_widget_get':
+            resp = await ghl_request(
+                'GET',
+                '/chat-widget/',
+                params={
+                    'locationId': loc_id,
+                },
+            )
+            return [{'type': 'text', 'text': json.dumps(resp, indent=2)}]
+
+        # ----- WhatsApp Phone Numbers -----
+        if name == 'ghl_whatsapp_phone_numbers_get':
+            resp = await ghl_request(
+                'GET',
+                f'/phone-system/whatsapp/location/{loc_id}/phone-numbers',
+                params={},
+            )
+            return [{'type': 'text', 'text': json.dumps(resp, indent=2)}]
+
+        # ----- Forms -----
+        if name == 'ghl_forms_get':
+            resp = await ghl_request(
+                'GET',
+                '/forms/',
+                params={},
+            )
+            return [{'type': 'text', 'text': json.dumps(resp, indent=2)}]
+
+        # ----- Custom Values -----
+        if name == 'ghl_custom_values_get':
+            resp = await ghl_request(
+                'GET',
+                f'/locations/{loc_id}/customValues',
+                params={},
+            )
+            return [{'type': 'text', 'text': json.dumps(resp, indent=2)}]
+
+        # ----- Payments Currency -----
+        if name == 'ghl_payments_currency_get':
+            resp = await ghl_request(
+                'GET',
+                '/payments/currency',
+                params={},
+            )
+            return [{'type': 'text', 'text': json.dumps(resp, indent=2)}]
+
+        # ----- Social Media Accounts -----
+        if name == 'ghl_social_media_accounts_get':
+            resp = await ghl_request(
+                'GET',
+                f'/social-media-posting/{loc_id}/accounts',
+                params={'fetchAll': 'true'},
+            )
+            return [{'type': 'text', 'text': json.dumps(resp, indent=2)}]
+
+        # ----- Templates -----
+        if name == 'ghl_templates_list':
+            resp = await ghl_request(
+                'GET',
+                '/templates/list',
                 params={},
             )
             return [{'type': 'text', 'text': json.dumps(resp, indent=2)}]

@@ -10,6 +10,13 @@
  *   • Funnels
  *   • Feature Flags
  *   • Facebook Integration
+ *   • Chat Widget
+ *   • WhatsApp Phone Numbers
+ *   • Forms
+ *   • Custom Values
+ *   • Payments Currency
+ *   • Social Media Accounts
+ *   • Templates
  *
  * Runs as an MCP stdio server when invoked without arguments,
  * or as a simple CLI when a sub‑command is supplied.
@@ -51,7 +58,7 @@ async function ghRequest<T>(
     'Content-Type': 'application/json',
     Accept: 'application/json',
     Version: '2021-07-28',
-    Authorization: `Bearer ${API_KEY.replace(/^pur\-/i, '')}`,
+    Authorization: `Bearer ${API_KEY.replace(/^pit-/i, '')}`,
   };
 
   const url = `https://services.leadconnectorhq.com${path}`;
@@ -434,7 +441,7 @@ const tools = [
   },
   {
     name: 'ghl_funnel_geo_location',
-    description: 'Get or set geo‑location settings for a funnel',
+    description: 'Set geo-location targeting for a funnel',
     inputSchema: {
       type: 'object',
       properties: {
@@ -443,7 +450,7 @@ const tools = [
         longitude: { type: 'number', description: 'Longitude' },
         radius: { type: 'number', description: 'Radius in meters' },
       },
-      required: ['funnelId'],
+      required: ['funnelId', 'latitude', 'longitude', 'radius'],
     },
   },
 
@@ -490,6 +497,103 @@ const tools = [
         },
       },
       required: ['locationId'],
+    },
+  },
+
+  // ----- Chat Widget -----
+  {
+    name: 'ghl_chat_widget_get',
+    description: 'Get chat widget settings',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        locationId: {
+          type: 'string',
+          description: 'Location ID (uses GHL_LOCATION_ID if omitted)',
+        },
+      },
+      required: ['locationId'],
+    },
+  },
+
+  // ----- WhatsApp Phone Numbers -----
+  {
+    name: 'ghl_whatsapp_phone_numbers_get',
+    description: 'Get WhatsApp phone numbers for a location',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        locationId: {
+          type: 'string',
+          description: 'Location ID (uses GHL_LOCATION_ID if omitted)',
+        },
+      },
+      required: ['locationId'],
+    },
+  },
+
+  // ----- Forms -----
+  {
+    name: 'ghl_forms_get',
+    description: 'Get forms',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+      required: [],
+    },
+  },
+
+  // ----- Custom Values -----
+  {
+    name: 'ghl_custom_values_get',
+    description: 'Get custom values for a location',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        locationId: {
+          type: 'string',
+          description: 'Location ID (uses GHL_LOCATION_ID if omitted)',
+        },
+      },
+      required: ['locationId'],
+    },
+  },
+
+  // ----- Payments Currency -----
+  {
+    name: 'ghl_payments_currency_get',
+    description: 'Get payment currencies',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+      required: [],
+    },
+  },
+
+  // ----- Social Media Accounts -----
+  {
+    name: 'ghl_social_media_accounts_get',
+    description: 'Get social media accounts for a location',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        locationId: {
+          type: 'string',
+          description: 'Location ID (uses GHL_LOCATION_ID if omitted)',
+        },
+      },
+      required: ['locationId'],
+    },
+  },
+
+  // ----- Templates -----
+  {
+    name: 'ghl_templates_list',
+    description: 'Get list of templates',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+      required: [],
     },
   },
 ];
@@ -573,7 +677,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     }
 
     // ----- Conversation AI -----
-    if (name === 'ghl_conversation_ai_create_agent') {
+    if (name === 'ghl_conversion_ai_create_agent') {
       const resp = await ghRequest('POST', '/conversation-ai/agent', undefined, {
         agentName: args?.agentName,
         agentRole: args?.agentRole,
@@ -841,6 +945,80 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         `/integrations/facebook/${locId}/linked-pages`,
         {}
       );
+      return {
+        content: [{ type: 'text', text: JSON.stringify(resp, null, 2) }],
+      };
+    }
+
+    // ----- Chat Widget -----
+    if (name === 'ghl_chat_widget_get') {
+      const resp = await ghRequest(
+        'GET',
+        '/chat-widget/',
+        {
+          locationId: locId,
+        }
+      );
+      return {
+        content: [{ type: 'text', text: JSON.stringify(resp, null, 2) }],
+      };
+    }
+
+    // ----- WhatsApp Phone Numbers -----
+    if (name === 'ghl_whatsapp_phone_numbers_get') {
+      const resp = await ghRequest(
+        'GET',
+        `/phone-system/whatsapp/location/${locId}/phone-numbers`,
+        {}
+      );
+      return {
+        content: [{ type: 'text', text: JSON.stringify(resp, null, 2) }],
+      };
+    }
+
+    // ----- Forms -----
+    if (name === 'ghl_forms_get') {
+      const resp = await ghRequest('GET', '/forms/', {});
+      return {
+        content: [{ type: 'text', text: JSON.stringify(resp, null, 2) }],
+      };
+    }
+
+    // ----- Custom Values -----
+    if (name === 'ghl_custom_values_get') {
+      const resp = await ghRequest(
+        'GET',
+        `/locations/${locId}/customValues`,
+        {}
+      );
+      return {
+        content: [{ type: 'text', text: JSON.stringify(resp, null, 2) }],
+      };
+    }
+
+    // ----- Payments Currency -----
+    if (name === 'ghl_payments_currency_get') {
+      const resp = await ghRequest('GET', '/payments/currency', {});
+      return {
+        content: [{ type: 'text', text: JSON.stringify(resp, null, 2) }],
+      };
+    }
+
+    // ----- Social Media Accounts -----
+    if (name === 'ghl_social_media_accounts_get') {
+      const resp = await ghRequest(
+        'GET',
+        `/social-media-posting/${locId}/accounts`,
+        { fetchAll: 'true' }
+      );
+      return {
+        content: [{ type: 'text', text: JSON.stringify(resp, null, 2) }],
+      };
+    }
+
+    // ----- Templates -----
+    if (name === 'ghl_templates_list') {
+      const resp = await ghRequest('GET', '/templates/list', {});
       return {
         content: [{ type: 'text', text: JSON.stringify(resp, null, 2) }],
       };
