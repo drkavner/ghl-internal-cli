@@ -7,6 +7,9 @@
  *   • Voice AI
  *   • Knowledge Base
  *   • Vibe AI
+ *   • Funnels
+ *   • Feature Flags
+ *   • Facebook Integration
  *
  * Runs as an MCP stdio server when invoked without arguments,
  * or as a simple CLI when a sub‑command is supplied.
@@ -48,7 +51,7 @@ async function ghRequest<T>(
     'Content-Type': 'application/json',
     Accept: 'application/json',
     Version: '2021-07-28',
-    Authorization: `Bearer ${API_KEY.replace(/^pit-/i, '')}`,
+    Authorization: `Bearer ${API_KEY.replace(/^pur\-/i, '')}`,
   };
 
   const url = `https://services.leadconnectorhq.com${path}`;
@@ -67,7 +70,7 @@ async function ghRequest<T>(
 }
 
 // -----------------------------------------------------------------------------
-// Tool definitions (mirror the capabilities in server.py / index.js)
+// Tool definitions (mirror the capabilities in server.py)
 // -----------------------------------------------------------------------------
 const tools = [
   // ----- Agent Studio -----
@@ -150,6 +153,17 @@ const tools = [
         agentName: { type: 'string', description: 'Agent name' },
         agentRole: { type: 'string', description: 'Agent role/purpose' },
       },
+    },
+  },
+  {
+    name: 'ghl_conversion_ai_get_agent',
+    description: 'Get a Conversation AI agent by ID (typo fix)',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        agentId: { type: 'string', description: 'Agent ID' },
+      },
+      required: ['agentId'],
     },
   },
   {
@@ -387,6 +401,97 @@ const tools = [
       required: ['projectId'],
     },
   },
+
+  // ----- Funnels -----
+  {
+    name: 'ghl_funnel_create',
+    description: 'Create a funnel',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: 'Funnel name' },
+        description: { type: 'string', description: 'Funnel description' },
+      },
+      required: ['name'],
+    },
+  },
+  {
+    name: 'ghl_funnel_create_step',
+    description: 'Create a funnel step',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        funnelId: { type: 'string', description: 'Funnel ID' },
+        stepName: { type: 'string', description: 'Step name' },
+        stepType: { type: 'string', description: 'Step type' },
+        stepConfig: {
+          type: 'object',
+          description: 'Step configuration (JSON object)',
+        },
+      },
+      required: ['funnelId', 'stepName', 'stepType'],
+    },
+  },
+  {
+    name: 'ghl_funnel_geo_location',
+    description: 'Get or set geo‑location settings for a funnel',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        funnelId: { type: 'string', description: 'Funnel ID' },
+        latitude: { type: 'number', description: 'Latitude' },
+        longitude: { type: 'number', description: 'Longitude' },
+        radius: { type: 'number', description: 'Radius in meters' },
+      },
+      required: ['funnelId'],
+    },
+  },
+
+  // ----- Feature Flags -----
+  {
+    name: 'ghl_feature_flags_get',
+    description: 'Get feature flags for a location',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        locationId: {
+          type: 'string',
+          description: 'Location ID (uses GHL_LOCATION_ID if omitted)',
+        },
+      },
+      required: ['locationId'],
+    },
+  },
+
+  // ----- Facebook Integration -----
+  {
+    name: 'ghl_facebook_connection_get',
+    description: 'Get Facebook connection for a location',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        locationId: {
+          type: 'string',
+          description: 'Location ID (uses GHL_LOCATION_ID if omitted)',
+        },
+      },
+      required: ['locationId'],
+    },
+  },
+  {
+    name: 'ghl_facebook_linked_pages_get',
+    description: 'Get linked Facebook pages for a location',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        locationId: {
+          type: 'string',
+          description: 'Location ID (uses GHL_LOCATION_ID if omitted)',
+        },
+      },
+      required: ['locationId'],
+    },
+  },
 ];
 
 // -----------------------------------------------------------------------------
@@ -473,6 +578,17 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         agentName: args?.agentName,
         agentRole: args?.agentRole,
       });
+      return {
+        content: [{ type: 'text', text: JSON.stringify(resp, null, 2) }],
+      };
+    }
+
+    if (name === 'ghl_conversion_ai_get_agent') {
+      // Note: Typo fix – this branch should be for get_agent
+      const resp = await ghRequest(
+        'GET',
+        `/conversation-ai/agent/${args?.agentId}`
+      );
       return {
         content: [{ type: 'text', text: JSON.stringify(resp, null, 2) }],
       };
@@ -648,6 +764,81 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const resp = await ghRequest(
         'GET',
         `/vibe-ai/projects/${args?.projectId}/sandbox/keep-alive`,
+        {}
+      );
+      return {
+        content: [{ type: 'text', text: JSON.stringify(resp, null, 2) }],
+      };
+    }
+
+    // ----- Funnels -----
+    if (name === 'ghl_funnel_create') {
+      const resp = await ghRequest('POST', '/funnels/funnel/create', undefined, {
+        name: args?.name,
+        description: args?.description,
+      });
+      return {
+        content: [{ type: 'text', text: JSON.stringify(resp, null, 2) }],
+      };
+    }
+
+    if (name === 'ghl_funnel_create_step') {
+      const resp = await ghRequest('POST', '/funnels/funnel/create-step', undefined, {
+        funnelId: args?.funnelId,
+        stepName: args?.stepName,
+        stepType: args?.stepType,
+        stepConfig: args?.stepConfig,
+      });
+      return {
+        content: [{ type: 'text', text: JSON.stringify(resp, null, 2) }],
+      };
+    }
+
+    if (name === 'ghl_funnel_geo_location') {
+      const resp = await ghRequest(
+        'POST',
+        '/funnels/funnel/geo-location/',
+        undefined,
+        {
+          funnelId: args?.funnelId,
+          latitude: args?.latitude,
+          longitude: args?.longitude,
+          radius: args?.radius,
+        }
+      );
+      return {
+        content: [{ type: 'text', text: JSON.stringify(resp, null, 2) }],
+      };
+    }
+
+    // ----- Feature Flags -----
+    if (name === 'ghl_feature_flags_get') {
+      const resp = await ghRequest(
+        'GET',
+        `/locations/${locId}/labs/featureFlags`,
+        {}
+      );
+      return {
+        content: [{ type: 'text', text: JSON.stringify(resp, null, 2) }],
+      };
+    }
+
+    // ----- Facebook Integration -----
+    if (name === 'ghl_facebook_connection_get') {
+      const resp = await ghRequest(
+        'GET',
+        `/integrations/facebook/${locId}/connection`,
+        {}
+      );
+      return {
+        content: [{ type: 'text', text: JSON.stringify(resp, null, 2) }],
+      };
+    }
+
+    if (name === 'ghl_facebook_linked_pages_get') {
+      const resp = await ghRequest(
+        'GET',
+        `/integrations/facebook/${locId}/linked-pages`,
         {}
       );
       return {

@@ -7,6 +7,8 @@ Provides access to the internal GHL v2 API for:
   • Voice AI
   • Knowledge Base
   • Vibe AI
+  • Funnels
+  • Feature Flags
 
 Run as an MCP stdio server (default) or as a simple CLI if you prefer.
 """
@@ -167,6 +169,17 @@ TOOLS: List[Tool] = [
     Tool(
         name='ghl_conversation_ai_get_agent',
         description='Get a Conversation AI agent by ID',
+        inputSchema={
+            'type': 'object',
+            'properties': {
+                'agentId': {'type': 'string', 'description': 'Agent ID'},
+            },
+            'required': ['agentId'],
+        },
+    ),
+    Tool(
+        name='ghl_conversion_ai_get_agent',
+        description='Get a Conversation AI agent by ID (typo fix)',
         inputSchema={
             'type': 'object',
             'properties': {
@@ -384,6 +397,51 @@ TOOLS: List[Tool] = [
                 'projectId': {'type': 'string', 'description': 'Vibe AI project ID'},
             },
             'required': ['projectId'],
+        },
+    ),
+    # ----- Funnels -----
+    Tool(
+        name='ghl_funnel_create',
+        description='Create a funnel',
+        inputSchema={
+            'type': 'object',
+            'properties': {
+                'name': {'type': 'string', 'description': 'Funnel name'},
+                'description': {'type': 'string', 'description': 'Funnel description'},
+            },
+            'required': ['name'],
+        },
+    ),
+    Tool(
+        name='ghl_funnel_create_step',
+        description='Create a funnel step',
+        inputSchema={
+            'type': 'object',
+            'properties': {
+                'funnelId': {'type': 'string', 'description': 'Funnel ID'},
+                'stepName': {'type': 'string', 'description': 'Step name'},
+                'stepType': {'type': 'string', 'description': 'Step type'},
+                'stepConfig': {
+                    'type': 'object',
+                    'description': 'Step configuration (JSON object)',
+                },
+            },
+            'required': ['funnelId', 'stepName', 'stepType'],
+        },
+    ),
+    # ----- Feature Flags -----
+    Tool(
+        name='ghl_feature_flags_get',
+        description='Get feature flags for a location',
+        inputSchema={
+            'type': 'object',
+            'properties': {
+                'locationId': {
+                    'type': 'string',
+                    'description': 'Location ID (uses GHL_LOCATION_ID if omitted)',
+                },
+            },
+            'required': ['locationId'],
         },
     ),
 ]
@@ -609,6 +667,40 @@ async def handle_call_tool(name: str, arguments: Optional[Dict[str, Any]]) -> Li
             resp = await ghl_request(
                 'GET',
                 f'/vibe-ai/projects/{arguments.get("projectId")}/sandbox/keep-alive',
+                params={},
+            )
+            return [{'type': 'text', 'text': json.dumps(resp, indent=2)}]
+
+        # ----- Funnels -----
+        if name == 'ghl_funnel_create':
+            resp = await ghl_request(
+                'POST',
+                '/funnels/funnel/create',
+                json_data={
+                    'name': arguments.get('name'),
+                    'description': arguments.get('description'),
+                },
+            )
+            return [{'type': 'text', 'text': json.dumps(resp, indent=2)}]
+
+        if name == 'ghl_funnel_create_step':
+            resp = await ghl_request(
+                'POST',
+                '/funnels/funnel/create-step',
+                json_data={
+                    'funnelId': arguments.get('funnelId'),
+                    'stepName': arguments.get('stepName'),
+                    'stepType': arguments.get('stepType'),
+                    'stepConfig': arguments.get('stepConfig'),
+                },
+            )
+            return [{'type': 'text', 'text': json.dumps(resp, indent=2)}]
+
+        # ----- Feature Flags -----
+        if name == 'ghl_feature_flags_get':
+            resp = await ghl_request(
+                'GET',
+                f'/locations/{loc_id}/labs/featureFlags',
                 params={},
             )
             return [{'type': 'text', 'text': json.dumps(resp, indent=2)}]
