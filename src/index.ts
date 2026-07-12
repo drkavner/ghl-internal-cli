@@ -17,6 +17,8 @@
  *   • Payments Currency
  *   • Social Media Accounts
  *   • Templates
+ *   • Pipelines
+ *   • Opportunities
  *
  * Runs as an MCP stdio server when invoked without arguments,
  * or as a simple CLI when a sub‑command is supplied.
@@ -160,17 +162,6 @@ const tools = [
         agentName: { type: 'string', description: 'Agent name' },
         agentRole: { type: 'string', description: 'Agent role/purpose' },
       },
-    },
-  },
-  {
-    name: 'ghl_conversion_ai_get_agent',
-    description: 'Get a Conversation AI agent by ID (typo fix)',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        agentId: { type: 'string', description: 'Agent ID' },
-      },
-      required: ['agentId'],
     },
   },
   {
@@ -596,6 +587,268 @@ const tools = [
       required: [],
     },
   },
+
+  // ----- Pipelines -----
+  {
+    name: 'ghl_pipelines_get',
+    description: 'Get all pipelines for a location',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        locationId: {
+          type: 'string',
+          description: 'Location ID (uses GHL_LOCATION_ID if omitted)',
+        },
+      },
+      required: ['locationId'],
+    },
+  },
+  {
+    name: 'ghl_pipeline_create',
+    description: 'Create a pipeline',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        locationId: {
+          type: 'string',
+          description: 'Location ID (uses GHL_LOCATION_ID if omitted)',
+        },
+        name: { type: 'string', description: 'Pipeline name' },
+        description: { type: 'string', description: 'Pipeline description (optional)' },
+      },
+      required: ['locationId', 'name'],
+    },
+  },
+  {
+    name: 'ghl_pipeline_get',
+    description: 'Get a specific pipeline by ID',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        pipelineId: { type: 'string', description: 'Pipeline ID' },
+        locationId: {
+          type: 'string',
+          description: 'Location ID (uses GHL_LOCATION_ID if omitted)',
+        },
+      },
+      required: ['pipelineId', 'locationId'],
+    },
+  },
+  {
+    name: 'ghl_pipeline_update',
+    description: 'Update a pipeline',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        pipelineId: { type: 'string', description: 'Pipeline ID' },
+        locationId: {
+          type: 'string',
+          description: 'Location ID (uses GHL_LOCATION_ID if omitted)',
+        },
+        name: { type: 'string', description: 'Pipeline name (optional)' },
+        description: { type: 'string', description: 'Pipeline description (optional)' },
+      },
+      required: ['pipelineId', 'locationId'],
+    },
+  },
+  {
+    name: 'ghl_pipeline_delete',
+    description: 'Delete a pipeline',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        pipelineId: { type: 'string', description: 'Pipeline ID' },
+        locationId: {
+          type: 'string',
+          description: 'Location ID (uses GHL_LOCATION_ID if omitted)',
+        },
+      },
+      required: ['pipelineId', 'locationId'],
+    },
+  },
+  {
+    name: 'ghl_pipeline_stages_get',
+    description: 'Get all stages for a pipeline',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        pipelineId: { type: 'string', description: 'Pipeline ID' },
+        locationId: {
+          type: 'string',
+          description: 'Location ID (uses GHL_LOCATION_ID if omitted)',
+        },
+      },
+      required: ['pipelineId', 'locationId'],
+    },
+  },
+  {
+    name: 'ghl_pipeline_stage_create_pipeline_stage',
+    description: 'Create a stage in a pipeline',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        pipelineId: { type: 'string', description: 'Pipeline ID' },
+        locationId: {
+          type: 'string',
+          description: 'Location ID (uses GHL_LOCATION_ID if omitted)',
+        },
+        stageName: { type: 'string', description: 'Stage name' },
+        stageType: { type: 'string', description: 'Stage type (e.g., open, won, lost)' },
+        sort: { type: 'number', description: 'Sort order (optional)' },
+      },
+      required: ['pipelineId', 'locationId', 'stageName', 'stageType'],
+    },
+  },
+  {
+    name: 'ghl_pipeline_stage_update',
+    description: 'Update a pipeline stage',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        pipelineId: { type: 'string', description: 'Pipeline ID' },
+        locationId: {
+          type: 'string',
+          description: 'Location ID (uses GHL_LOCATION_ID if omitted)',
+        },
+        stageId: { type: 'string', description: 'Stage ID' },
+        stageName: { type: 'string', description: 'Stage name (optional)' },
+        stageType: { type: 'string', description: 'Stage type (optional)' },
+        sort: { type: 'number', description: 'Sort order (optional)' },
+      },
+      required: ['pipelineId', 'locationId', 'stageId'],
+    },
+  },
+  {
+    name: 'ghl_pipeline_stage_delete',
+    description: 'Delete a pipeline stage',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        pipelineId: { type: 'string', description: 'Pipeline ID' },
+        locationId: {
+          type: 'string',
+          description: 'Location ID (uses GHL_LOCATION_ID if omitted)',
+        },
+        stageId: { type: 'string', description: 'Stage ID' },
+      },
+      required: ['pipelineId', 'locationId', 'stageId'],
+    },
+  },
+
+  // ----- Opportunities -----
+  {
+    name: 'ghl_opportunities_get',
+    description: 'Get all opportunities for a location',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        locationId: {
+          type: 'string',
+          description: 'Location ID (uses GHL_LOCATION_ID if omitted)',
+        },
+        pipelineId: {
+          type: 'string',
+          description: 'Filter by pipeline ID (optional)',
+        },
+        stageId: {
+          type: 'string',
+          description: 'Filter by stage ID (optional)',
+        },
+        limit: { type: 'string', default: '100' },
+        offset: { type: 'string', default: '0' },
+      },
+      required: ['locationId'],
+    },
+  },
+  {
+    name: 'ghl_opportunity_create',
+    description: 'Create an opportunity',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        locationId: {
+          type: 'string',
+          description: 'Location ID (uses GHL_LOCATION_ID if omitted)',
+        },
+        pipelineId: { type: 'string', description: 'Pipeline ID' },
+        stageId: { type: 'string', description: 'Stage ID' },
+        contactId: { type: 'string', description: 'Contact ID (optional)' },
+        title: { type: 'string', description: 'Opportunity title' },
+        value: { type: 'number', description: 'Opportunity value (optional)' },
+        probability: { type: 'number', description: 'Probability percentage (optional)' },
+        expectedCloseDate: { type: 'string', description: 'Expected close date (ISO string, optional)' },
+        source: { type: 'string', description: 'Source (optional)' },
+        sourceUrl: { type: 'string', description: 'Source URL (optional)' },
+        assignedTo: { type: 'string', description: 'Assigned to user ID (optional)' },
+        tags: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Tags (optional)',
+        },
+      },
+      required: ['locationId', 'pipelineId', 'stageId', 'title'],
+    },
+  },
+  {
+    name: 'ghl_opportunity_get',
+    description: 'Get a specific opportunity by ID',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        opportunityId: { type: 'string', description: 'Opportunity ID' },
+        locationId: {
+          type: 'string',
+          description: 'Location ID (uses GHL_LOCATION_ID if omitted)',
+        },
+      },
+      required: ['opportunityId', 'locationId'],
+    },
+  },
+  {
+    name: 'ghl_opportunity_update',
+    description: 'Update an opportunity',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        opportunityId: { type: 'string', description: 'Opportunity ID' },
+        locationId: {
+          type: 'string',
+          description: 'Location ID (uses GHL_LOCATION_ID if omitted)',
+        },
+        pipelineId: { type: 'string', description: 'Pipeline ID (optional)' },
+        stageId: { type: 'string', description: 'Stage ID (optional)' },
+        contactId: { type: 'string', description: 'Contact ID (optional)' },
+        title: { type: 'string', description: 'Opportunity title (optional)' },
+        value: { type: 'number', description: 'Opportunity value (optional)' },
+        probability: { type: 'number', description: 'Probability percentage (optional)' },
+        expectedCloseDate: { type: 'string', description: 'Expected close date (ISO string, optional)' },
+        source: { type: 'string', description: 'Source (optional)' },
+        sourceUrl: { type: 'string', description: 'Source URL (optional)' },
+        assignedTo: { type: 'string', description: 'Assigned to user ID (optional)' },
+        tags: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Tags (optional)',
+        },
+      },
+      required: ['opportunityId', 'locationId'],
+    },
+  },
+  {
+    name: 'ghl_opportunity_delete',
+    description: 'Delete an opportunity',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        opportunityId: { type: 'string', description: 'Opportunity ID' },
+        locationId: {
+          type: 'string',
+          description: 'Location ID (uses GHL_LOCATION_ID if omitted)',
+        },
+      },
+      required: ['opportunityId', 'locationId'],
+    },
+  },
 ];
 
 // -----------------------------------------------------------------------------
@@ -899,17 +1152,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     }
 
     if (name === 'ghl_funnel_geo_location') {
-      const resp = await ghRequest(
-        'POST',
-        '/funnels/funnel/geo-location/',
-        undefined,
-        {
-          funnelId: args?.funnelId,
-          latitude: args?.latitude,
-          longitude: args?.longitude,
-          radius: args?.radius,
-        }
-      );
+      const resp = await ghRequest('POST', '/funnels/funnel/geo-location/', undefined, {
+        funnelId: args?.funnelId,
+        latitude: args?.latitude,
+        longitude: args?.longitude,
+        radius: args?.radius,
+      });
       return {
         content: [{ type: 'text', text: JSON.stringify(resp, null, 2) }],
       };
@@ -917,11 +1165,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
     // ----- Feature Flags -----
     if (name === 'ghl_feature_flags_get') {
-      const resp = await ghRequest(
-        'GET',
-        `/locations/${locId}/labs/featureFlags`,
-        {}
-      );
+      const resp = await ghRequest('GET', `/locations/${locId}/labs/featureFlags`, {});
       return {
         content: [{ type: 'text', text: JSON.stringify(resp, null, 2) }],
       };
@@ -929,22 +1173,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
     // ----- Facebook Integration -----
     if (name === 'ghl_facebook_connection_get') {
-      const resp = await ghRequest(
-        'GET',
-        `/integrations/facebook/${locId}/connection`,
-        {}
-      );
+      const resp = await ghRequest('GET', `/integrations/facebook/${locId}/connection`, {});
       return {
         content: [{ type: 'text', text: JSON.stringify(resp, null, 2) }],
       };
     }
 
     if (name === 'ghl_facebook_linked_pages_get') {
-      const resp = await ghRequest(
-        'GET',
-        `/integrations/facebook/${locId}/linked-pages`,
-        {}
-      );
+      const resp = await ghRequest('GET', `/integrations/facebook/${locId}/linked-pages`, {});
       return {
         content: [{ type: 'text', text: JSON.stringify(resp, null, 2) }],
       };
@@ -952,13 +1188,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
     // ----- Chat Widget -----
     if (name === 'ghl_chat_widget_get') {
-      const resp = await ghRequest(
-        'GET',
-        '/chat-widget/',
-        {
-          locationId: locId,
-        }
-      );
+      const resp = await ghRequest('GET', '/chat-widget/', {
+        locationId: locId,
+      });
       return {
         content: [{ type: 'text', text: JSON.stringify(resp, null, 2) }],
       };
@@ -966,11 +1198,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
     // ----- WhatsApp Phone Numbers -----
     if (name === 'ghl_whatsapp_phone_numbers_get') {
-      const resp = await ghRequest(
-        'GET',
-        `/phone-system/whatsapp/location/${locId}/phone-numbers`,
-        {}
-      );
+      const resp = await ghRequest('GET', `/phone-system/whatsapp/location/${locId}/phone-numbers`, {});
       return {
         content: [{ type: 'text', text: JSON.stringify(resp, null, 2) }],
       };
@@ -986,11 +1214,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
     // ----- Custom Values -----
     if (name === 'ghl_custom_values_get') {
-      const resp = await ghRequest(
-        'GET',
-        `/locations/${locId}/customValues`,
-        {}
-      );
+      const resp = await ghRequest('GET', `/locations/${locId}/customValues`, {});
       return {
         content: [{ type: 'text', text: JSON.stringify(resp, null, 2) }],
       };
@@ -1006,11 +1230,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
     // ----- Social Media Accounts -----
     if (name === 'ghl_social_media_accounts_get') {
-      const resp = await ghRequest(
-        'GET',
-        `/social-media-posting/${locId}/accounts`,
-        { fetchAll: 'true' }
-      );
+      const resp = await ghRequest('GET', `/social-media-posting/${locId}/accounts`, { fetchAll: 'true' });
       return {
         content: [{ type: 'text', text: JSON.stringify(resp, null, 2) }],
       };
@@ -1024,29 +1244,179 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       };
     }
 
+    // ----- Pipelines -----
+    if (name === 'ghl_pipelines_get') {
+      const resp = await ghRequest('GET', '/pipelines/', { locationId: locId });
+      return {
+        content: [{ type: 'text', text: JSON.stringify(resp, null, 2) }],
+      };
+    }
+
+    if (name === 'ghl_pipeline_create') {
+      const resp = await ghRequest('POST', '/pipelines/', undefined, {
+        locationId: locId,
+        name: args?.name,
+        description: args?.description,
+      });
+      return {
+        content: [{ type: 'text', text: JSON.stringify(resp, null, 2) }],
+      };
+    }
+
+    if (name === 'ghl_pipeline_get') {
+      const resp = await ghRequest('GET', `/pipelines/${args?.pipelineId}`, { locationId: locId });
+      return {
+        content: [{ type: 'text', text: JSON.stringify(resp, null, 2) }],
+      };
+    }
+
+    if (name === 'ghl_pipeline_update') {
+      const resp = await ghRequest('PUT', `/pipelines/${args?.pipelineId}`, undefined, {
+        locationId: locId,
+        name: args?.name,
+        description: args?.description,
+      });
+      return {
+        content: [{ type: 'text', text: JSON.stringify(resp, null, 2) }],
+      };
+    }
+
+    if (name === 'ghl_pipeline_delete') {
+      const resp = await ghRequest('DELETE', `/pipelines/${args?.pipelineId}`, { locationId: locId });
+      return {
+        content: [{ type: 'text', text: JSON.stringify(resp, null, 2) }],
+      };
+    }
+
+    if (name === 'ghl_pipeline_stages_get') {
+      const resp = await ghRequest('GET', `/pipelines/${args?.pipelineId}/stages`, { locationId: locId });
+      return {
+        content: [{ type: 'text', text: JSON.stringify(resp, null, 2) }],
+      };
+    }
+
+    if (name === 'ghl_pipeline_stage_create') {
+      const resp = await ghRequest('POST', `/pipelines/${args?.pipelineId}/stages`, undefined, {
+        locationId: locId,
+        stageName: args?.stageName,
+        stageType: args?.stageType,
+        sort: args?.sort,
+      });
+      return {
+        content: [{ type: 'text', text: JSON.stringify(resp, null, 2) }],
+      };
+    }
+
+    if (name === 'ghl_pipeline_stage_update') {
+      const resp = await ghRequest('PUT', `/pipelines/${args?.pipelineId}/stages/${args?.stageId}`, undefined, {
+        locationId: locId,
+        stageName: args?.stageName,
+        stageType: args?.stageType,
+        sort: args?.sort,
+      });
+      return {
+        content: [{ type: 'text', text: JSON.stringify(resp, null, 2) }],
+      };
+    }
+
+    if (name === 'ghl_pipeline_stage_delete') {
+      const resp = await ghRequest('DELETE', `/pipelines/${args?.pipelineId}/stages/${args?.stageId}`, { locationId: locId });
+      return {
+        content: [{ type: 'text', text: JSON.stringify(resp, null, 2) }],
+      };
+    }
+
+    // ----- Opportunities -----
+    if (name === 'ghl_opportunities_get') {
+      const resp = await ghRequest('GET', '/opportunities/', {
+        locationId: locId,
+        pipelineId: args?.pipelineId,
+        stageId: args?.stageId,
+        limit: args?.limit ?? '100',
+        offset: args?.offset ?? '0',
+      });
+      return {
+        content: [{ type: 'text', text: JSON.stringify(resp, null, 2) }],
+      };
+    }
+
+    if (name === 'ghl_opportunity_create') {
+      const resp = await ghRequest('POST', '/opportunities/', undefined, {
+        locationId: locId,
+        pipelineId: args?.pipelineId,
+        stageId: args?.stageId,
+        contactId: args?.contactId,
+        title: args?.title,
+        value: args?.value,
+        probability: args?.probability,
+        expectedCloseDate: args?.expectedCloseDate,
+        source: args?.source,
+        sourceUrl: args?.sourceUrl,
+        assignedTo: args?.assignedTo,
+        tags: args?.tags,
+      });
+      return {
+        content: [{ type: 'text', text: JSON.stringify(resp, null, 2) }],
+      };
+    }
+
+    if (name === 'ghl_opportunity_get') {
+      const resp = await ghRequest('GET', `/opportunities/${args?.opportunityId}`, { locationId: locId });
+      return {
+        content: [{ type: 'text', text: JSON.stringify(resp, null, 2) }],
+      };
+    }
+
+    if (name === 'ghl_opportunity_update') {
+      const resp = await ghRequest('PUT', `/opportunities/${args?.opportunityId}`, undefined, {
+        locationId: locId,
+        pipelineId: args?.pipelineId,
+        stageId: args?.stageId,
+        contactId: args?.contactId,
+        title: args?.title,
+        value: args?.value,
+        probability: args?.probability,
+        expectedCloseDate: args?.expectedCloseDate,
+        source: args?.source,
+        sourceUrl: args?.sourceUrl,
+        assignedTo: args?.assignedTo,
+        tags: args?.tags,
+      });
+      return {
+        content: [{ type: 'text', text: JSON.stringify(resp, null, 2) }],
+      };
+    }
+
+    if (name === 'ghl_opportunity_delete') {
+      const resp = await ghRequest('DELETE', `/opportunities/${args?.opportunityId}`, { locationId: locId });
+      return {
+        content: [{ type: 'text', text: JSON.stringify(resp, null, 2) }],
+      };
+    }
+
     // Unknown tool
     return {
       content: [{ type: 'text', text: `Unknown tool: ${name}` }],
       isError: true,
     };
-  } catch (err: any) {
+  } catch (e) {
     return {
-      content: [{ type: 'text', text: `Error: ${err.message ?? String(err)}` }],
+      content: [{ type: 'text', text: `Error: ${(e as Error).message}` }],
       isError: true,
     };
   }
 });
 
 // -----------------------------------------------------------------------------
-// Start server (stdio) – this is what Hermes/MCP clients will connect to
+// Main
 // -----------------------------------------------------------------------------
+main().catch((err) => {
+  console.error('[ghl-internal-cli] Fatal error:', err);
+  process.exit(1);
+});
+
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error('[ghl-internal-cli] MCP server connected via stdio');
 }
-
-main().catch((err) => {
-  console.error('[ghl-internal-cli] Fatal error:', err);
-  process.exit(1);
-});

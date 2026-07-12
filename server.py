@@ -17,6 +17,8 @@ Provides access to the internal GHL v2 API for:
   • Payments Currency
   • Social Media Accounts
   • Templates
+  • Pipelines
+  • Opportunities
 
 Run as an MCP stdio server (default) or as a simple CLI if you prefer.
 """
@@ -94,8 +96,8 @@ TOOLS: List[Tool] = [
                     'description': 'Location ID (uses GHL_LOCATION_ID if omitted)',
                 },
                 'agentName': {'type': 'string', 'description': 'Agent name'},
-                'agentPrompt': {type: 'string', 'description': 'System prompt'},
-                'welcomeMessage': {type: 'string', 'description': 'Welcome message'},
+                'agentPrompt': {'type': 'string', 'description': 'System prompt'},
+                'welcomeMessage': {'type': 'string', 'description': 'Welcome message'},
             },
             'required': ['locationId'],
         },
@@ -164,17 +166,6 @@ TOOLS: List[Tool] = [
         },
     ),
     Tool(
-        name='ghl_conversion_ai_get_agent',
-        description='Get a Conversation AI agent by ID (typo fix)',
-        inputSchema={
-            'type': 'object',
-            'properties': {
-                'agentId': {'type': 'string', 'description': 'Agent ID'},
-            },
-            'required': ['agentId'],
-        },
-    ),
-    Tool(
         name='ghl_conversation_ai_search_agents',
         description='Search Conversation AI agents',
         inputSchema={
@@ -191,7 +182,7 @@ TOOLS: List[Tool] = [
         inputSchema={
             'type': 'object',
             'properties': {
-                'agentId': {type: 'string', 'description': 'Agent ID'},
+                'agentId': {'type': 'string', 'description': 'Agent ID'},
             },
             'required': ['agentId'],
         },
@@ -486,7 +477,7 @@ TOOLS: List[Tool] = [
         description='Get linked Facebook pages for a location',
         inputSchema={
             'type': 'object',
-            'parameters': {
+            'properties': {
                 'locationId': {
                     'type': 'string',
                     'description': 'Location ID (uses GHL_LOCATION_ID if omitted)',
@@ -585,6 +576,266 @@ TOOLS: List[Tool] = [
             'required': [],
         },
     ),
+    # ----- Pipelines -----
+    Tool(
+        name='ghl_pipelines_get',
+        description='Get all pipelines for a location',
+        inputSchema={
+            'type': 'object',
+            'properties': {
+                'locationId': {
+                    'type': 'string',
+                    'description': 'Location ID (uses GHL_LOCATION_ID if omitted)',
+                },
+            },
+            'required': ['locationId'],
+        },
+    ),
+    Tool(
+        name='ghl_pipeline_create',
+        description='Create a pipeline',
+        inputSchema={
+            'type': 'object',
+            'properties': {
+                'locationId': {
+                    'type': 'string',
+                    'description': 'Location ID (uses GHL_LOCATION_ID if omitted)',
+                },
+                'name': {'type': 'string', 'description': 'Pipeline name'},
+                'description': {'type': 'string', 'description': 'Pipeline description (optional)'},
+            },
+            'required': ['locationId', 'name'],
+        },
+    ),
+    Tool(
+        name='ghl_pipeline_get',
+        description='Get a specific pipeline by ID',
+        inputSchema={
+            'type': 'object',
+            'properties': {
+                'pipelineId': {'type': 'string', 'description': 'Pipeline ID'},
+                'locationId': {
+                    'type': 'string',
+                    'description': 'Location ID (uses GHL_LOCATION_ID if omitted)',
+                },
+            },
+            'required': ['pipelineId', 'locationId'],
+        },
+    ),
+    Tool(
+        name='ghl_pipeline_update',
+        description='Update a pipeline',
+        inputSchema={
+            'type': 'object',
+            'properties': {
+                'pipelineId': {'type': 'string', 'description': 'Pipeline ID'},
+                'locationId': {
+                    'type': 'string',
+                    'description': 'Location ID (uses GHL_LOCATION_ID if omitted)',
+                },
+                'name': {'type': 'string', 'description': 'Pipeline name (optional)'},
+                'description': {'type': 'string', 'description': 'Pipeline description (optional)'},
+            },
+            'required': ['pipelineId', 'locationId'],
+        },
+    ),
+    Tool(
+        name='ghl_pipeline_delete',
+        description='Delete a pipeline',
+        inputSchema={
+            'type': 'object',
+            'properties': {
+                'pipelineId': {'type': 'string', 'description': 'Pipeline ID'},
+                'locationId': {
+                    'type': 'string',
+                    'description': 'Location ID (uses GHL_LOCATION_ID if omitted)',
+                },
+            },
+            'required': ['pipelineId', 'locationId'],
+        },
+    ),
+    Tool(
+        name='ghl_pipeline_stages_get',
+        description='Get all stages for a pipeline',
+        inputSchema={
+            'type': 'object',
+            'properties': {
+                'pipelineId': {'type': 'string', 'description': 'Pipeline ID'},
+                'locationId': {
+                    'type': 'string',
+                    'description': 'Location ID (uses GHL_LOCATION_ID if omitted)',
+                },
+            },
+            'required': ['pipelineId', 'locationId'],
+        },
+    ),
+    Tool(
+        name='ghl_pipeline_stage_create',
+        description='Create a stage in a pipeline',
+        inputSchema={
+            'type': 'object',
+            'properties': {
+                'pipelineId': {'type': 'string', 'description': 'Pipeline ID'},
+                'locationId': {
+                    'type': 'string',
+                    'description': 'Location ID (uses GHL_LOCATION_ID if omitted)',
+                },
+                'stageName': {'type': 'string', 'description': 'Stage name'},
+                'stageType': {'type': 'string', 'description': 'Stage type (e.g., open, won, lost)'},
+                'sort': {'type': 'number', 'description': 'Sort order (optional)'},
+            },
+            'required': ['pipelineId', 'locationId', 'stageName', 'stageType'],
+        },
+    ),
+    Tool(
+        name='ghl_pipeline_stage_update',
+        description='Update a pipeline stage',
+        inputSchema={
+            'type': 'object',
+            'properties': {
+                'pipelineId': {'type': 'string', 'description': 'Pipeline ID'},
+                'locationId': {
+                    'type': 'string',
+                    'description': 'Location ID (uses GHL_LOCATION_ID if omitted)',
+                },
+                'stageId': {'type': 'string', 'description': 'Stage ID'},
+                'stageName': {'type': 'string', 'description': 'Stage name (optional)'},
+                'stageType': {'type': 'string', 'description': 'Stage type (optional)'},
+                'sort': {'type': 'number', 'description': 'Sort order (optional)'},
+            },
+            'required': ['pipelineId', 'locationId', 'stageId'],
+        },
+    ),
+    Tool(
+        name='ghl_pipeline_stage_delete',
+        description='Delete a pipeline stage',
+        inputSchema={
+            'type': 'object',
+            'properties': {
+                'pipelineId': {'type': 'string', 'description': 'Pipeline ID'},
+                'locationId': {
+                    'type': 'string',
+                    'description': 'Location ID (uses GHL_LOCATION_ID if omitted)',
+                },
+                'stageId': {'type': 'string', 'description': 'Stage ID'},
+            },
+            'required': ['pipelineId', 'locationId', 'stageId'],
+        },
+    ),
+    # ----- Opportunities -----
+    Tool(
+        name='ghl_opportunities_get',
+        description='Get all opportunities for a location',
+        inputSchema={
+            'type': 'object',
+            'properties': {
+                'locationId': {
+                    'type': 'string',
+                    'description': 'Location ID (uses GHL_LOCATION_ID if omitted)',
+                },
+                'pipelineId': {
+                    'type': 'string',
+                    'description': 'Filter by pipeline ID (optional)',
+                },
+                'stageId': {
+                    'type': 'string',
+                    'description': 'Filter by stage ID (optional)',
+                },
+                'limit': {'type': 'string', 'default': '100'},
+                'offset': {'type': 'string', 'default': '0'},
+            },
+            'required': ['locationId'],
+        },
+    ),
+    Tool(
+        name='ghl_opportunity_create',
+        description='Create an opportunity',
+        inputSchema={
+            'type': 'object',
+            'properties': {
+                'locationId': {
+                    'type': 'string',
+                    'description': 'Location ID (uses GHL_LOCATION_ID if omitted)',
+                },
+                'pipelineId': {'type': 'string', 'description': 'Pipeline ID'},
+                'stageId': {'type': 'string', 'description': 'Stage ID'},
+                'contactId': {'type': 'string', 'description': 'Contact ID (optional)'},
+                'title': {'type': 'string', 'description': 'Opportunity title'},
+                'value': {'type': 'number', 'description': 'Opportunity value (optional)'},
+                'probability': {'type': 'number', 'description': 'Probability percentage (optional)'},
+                'expectedCloseDate': {'type': 'string', 'description': 'Expected close date (ISO string, optional)'},
+                'source': {'type': 'string', 'description': 'Source (optional)'},
+                'sourceUrl': {'type': 'string', 'description': 'Source URL (optional)'},
+                'assignedTo': {'type': 'string', 'description': 'Assigned to user ID (optional)'},
+                'tags': {
+                    'type': 'array',
+                    'items': {'type': 'string'},
+                    'description': 'Tags (optional)',
+                },
+            },
+            'required': ['locationId', 'pipelineId', 'stageId', 'title'],
+        },
+    ),
+    Tool(
+        name='ghl_opportunity_get',
+        description='Get a specific opportunity by ID',
+        inputSchema={
+            'type': 'object',
+            'properties': {
+                'opportunityId': {'type': 'string', 'description': 'Opportunity ID'},
+                'locationId': {
+                    'type': 'string',
+                    'description': 'Location ID (uses GHL_LOCATION_ID if omitted)',
+                },
+            },
+            'required': ['opportunityId', 'locationId'],
+        },
+    ),
+    Tool(
+        name='ghl_opportunity_update',
+        description='Update an opportunity',
+        inputSchema={
+            'type': 'object',
+            'properties': {
+                'opportunityId': {'type': 'string', 'description': 'Opportunity ID'},
+                'locationId': {
+                    'type': 'string',
+                    'description': 'Location ID (uses GHL_LOCATION_ID if omitted)',
+                },
+                'pipelineId': {'type': 'string', 'description': 'Pipeline ID (optional)'},
+                'stageId': {'type': 'string', 'description': 'Stage ID (optional)'},
+                'contactId': {'type': 'string', 'description': 'Contact ID (optional)'},
+                'title': {'type': 'string', 'description': 'Opportunity title (optional)'},
+                'value': {'type': 'number', 'description': 'Opportunity value (optional)'},
+                'probability': {'type': 'number', 'description': 'Probability percentage (optional)'},
+                'expectedCloseDate': {'type': 'string', 'description': 'Expected close date (ISO string, optional)'},
+                'source': {'type': 'string', 'description': 'Source (optional)'},
+                'sourceUrl': {'type': 'string', 'description': 'Source URL (optional)'},
+                'assignedTo': {'type': 'string', 'description': 'Assigned to user ID (optional)'},
+                'tags': {
+                    'type': 'array',
+                    'items': {'type': 'string'},
+                    'description': 'Tags (optional)',
+                },
+            },
+            'required': ['opportunityId', 'locationId'],
+        },
+    ),
+    Tool(
+        name='ghl_opportunity_delete',
+        description='Delete an opportunity',
+        inputSchema={
+            'type': 'object',
+            'properties': {
+                'opportunityId': {'type': 'string', 'description': 'Opportunity ID'},
+                'locationId': {
+                    'type': 'string',
+                    'description': 'Location ID (uses GHL_LOCATION_ID if omitted)',
+                },
+            },
+            'required': ['opportunityId', 'locationId'],
+        },
+    ),
 ]
 
 @server.list_tools()
@@ -655,14 +906,6 @@ async def handle_call_tool(name: str, arguments: Optional[Dict[str, Any]]) -> Li
                     'agentName': arguments.get('agentName'),
                     'agentRole': arguments.get('agentRole'),
                 },
-            )
-            return [{'type': 'text', 'text': json.dumps(resp, indent=2)}]
-
-        if name == 'ghl_conversion_ai_get_agent':
-            # Note: Typo fix – this branch should be for get_agent
-            resp = await ghl_request(
-                'GET',
-                f'/conversation-ai/agent/{arguments.get("agentId")}',
             )
             return [{'type': 'text', 'text': json.dumps(resp, indent=2)}]
 
@@ -870,7 +1113,7 @@ async def handle_call_tool(name: str, arguments: Optional[Dict[str, Any]]) -> Li
         if name == 'ghl_facebook_connection_get':
             resp = await ghl_request(
                 'GET',
-                f'/integrations/facebook/{locId}/connection',
+                f'/integrations/facebook/{loc_id}/connection',
                 params={},
             )
             return [{'type': 'text', 'text': json.dumps(resp, indent=2)}]
@@ -878,7 +1121,7 @@ async def handle_call_tool(name: str, arguments: Optional[Dict[str, Any]]) -> Li
         if name == 'ghl_facebook_linked_pages_get':
             resp = await ghl_request(
                 'GET',
-                f'/integrations/facebook/{locId}/linked-pages',
+                f'/integrations/facebook/{loc_id}/linked-pages',
                 params={},
             )
             return [{'type': 'text', 'text': json.dumps(resp, indent=2)}]
@@ -945,6 +1188,172 @@ async def handle_call_tool(name: str, arguments: Optional[Dict[str, Any]]) -> Li
                 'GET',
                 '/templates/list',
                 params={},
+            )
+            return [{'type': 'text', 'text': json.dumps(resp, indent=2)}]
+
+        # ----- Pipelines -----
+        if name == 'ghl_pipelines_get':
+            resp = await ghl_request(
+                'GET',
+                '/pipelines/',
+                params={
+                    'locationId': loc_id,
+                },
+            )
+            return [{'type': 'text', 'text': json.dumps(resp, indent=2)}]
+
+        if name == 'ghl_pipeline_create':
+            resp = await ghl_request(
+                'POST',
+                '/pipelines/',
+                json_data={
+                    'locationId': loc_id,
+                    'name': arguments.get('name'),
+                    'description': arguments.get('description'),
+                },
+            )
+            return [{'type': 'text', 'text': json.dumps(resp, indent=2)}]
+
+        if name == 'ghl_pipeline_get':
+            resp = await ghl_request(
+                'GET',
+                f'/pipelines/{arguments.get("pipelineId")}',
+                params={'locationId': loc_id},
+            )
+            return [{'type': 'text', 'text': json.dumps(resp, indent=2)}]
+
+        if name == 'ghl_pipeline_update':
+            resp = await ghl_request(
+                'PUT',
+                f'/pipelines/{arguments.get("pipelineId")}',
+                json_data={
+                    'locationId': loc_id,
+                    'name': arguments.get('name'),
+                    'description': arguments.get('description'),
+                },
+            )
+            return [{'type': 'text', 'text': json.dumps(resp, indent=2)}]
+
+        if name == 'ghl_pipeline_delete':
+            resp = await ghl_request(
+                'DELETE',
+                f'/pipelines/{arguments.get("pipelineId")}',
+                params={'locationId': loc_id},
+            )
+            return [{'type': 'text', 'text': json.dumps(resp, indent=2)}]
+
+        if name == 'ghl_pipeline_stages_get':
+            resp = await ghl_request(
+                'GET',
+                f'/pipelines/{arguments.get("pipelineId")}/stages',
+                params={'locationId': loc_id},
+            )
+            return [{'type': 'text', 'text': json.dumps(resp, indent=2)}]
+
+        if name == 'ghl_pipeline_stage_create':
+            resp = await ghl_request(
+                'POST',
+                f'/pipelines/{arguments.get("pipelineId")}/stages',
+                json_data={
+                    'locationId': loc_id,
+                    'stageName': arguments.get('stageName'),
+                    'stageType': arguments.get('stageType'),
+                    'sort': arguments.get('sort'),
+                },
+            )
+            return [{'type': 'text', 'text': json.dumps(resp, indent=2)}]
+
+        if name == 'ghl_pipeline_stage_update':
+            resp = await ghl_request(
+                'PUT',
+                f'/pipelines/{arguments.get("pipelineId")}/stages/{arguments.get("stageId")}',
+                json_data={
+                    'locationId': loc_id,
+                    'stageName': arguments.get('stageName'),
+                    'stageType': arguments.get('stageType'),
+                    'sort': arguments.get('sort'),
+                },
+            )
+            return [{'type': 'text', 'text': json.dumps(resp, indent=2)}]
+
+        if name == 'ghl_pipeline_stage_delete':
+            resp = await ghl_request(
+                'DELETE',
+                f'/pipelines/{arguments.get("pipelineId")}/stages/{arguments.get("stageId")}',
+                params={'locationId': loc_id},
+            )
+            return [{'type': 'text', 'text': json.dumps(resp, indent=2)}]
+
+        # ----- Opportunities -----
+        if name == 'ghl_opportunities_get':
+            resp = await ghl_request(
+                'GET',
+                '/opportunities/',
+                params={
+                    'locationId': loc_id,
+                    'pipelineId': arguments.get('pipelineId'),
+                    'stageId': arguments.get('stageId'),
+                    'limit': arguments.get('limit', '100'),
+                    'offset': arguments.get('offset', '0'),
+                },
+            )
+            return [{'type': 'text', 'text': json.dumps(resp, indent=2)}]
+
+        if name == 'ghl_opportunity_create':
+            resp = await ghl_request(
+                'POST',
+                '/opportunities/',
+                json_data={
+                    'locationId': loc_id,
+                    'pipelineId': arguments.get('pipelineId'),
+                    'stageId': arguments.get('stageId'),
+                    'contactId': arguments.get('contactId'),
+                    'title': arguments.get('title'),
+                    'value': arguments.get('value'),
+                    'probability': arguments.get('probability'),
+                    'expectedCloseDate': arguments.get('expectedCloseDate'),
+                    'source': arguments.get('source'),
+                    'sourceUrl': arguments.get('sourceUrl'),
+                    'assignedTo': arguments.get('assignedTo'),
+                    'tags': arguments.get('tags'),
+                },
+            )
+            return [{'type': 'text', 'text': json.dumps(resp, indent=2)}]
+
+        if name == 'ghl_opportunity_get':
+            resp = await ghl_request(
+                'GET',
+                f'/opportunities/{arguments.get("opportunityId")}',
+                params={'locationId': loc_id},
+            )
+            return [{'type': 'text', 'text': json.dumps(resp, indent=2)}]
+
+        if name == 'ghl_opportunity_update':
+            resp = await ghl_request(
+                'PUT',
+                f'/opportunities/{arguments.get("opportunityId")}',
+                json_data={
+                    'locationId': loc_id,
+                    'pipelineId': arguments.get('pipelineId'),
+                    'stageId': arguments.get('stageId'),
+                    'contactId': arguments.get('contactId'),
+                    'title': arguments.get('title'),
+                    'value': arguments.get('value'),
+                    'probability': arguments.get('probability'),
+                    'expectedCloseDate': arguments.get('expectedCloseDate'),
+                    'source': arguments.get('source'),
+                    'sourceUrl': arguments.get('sourceUrl'),
+                    'assignedTo': arguments.get('assignedTo'),
+                    'tags': arguments.get('tags'),
+                },
+            )
+            return [{'type': 'text', 'text': json.dumps(resp, indent=2)}]
+
+        if name == 'ghl_opportunity_delete':
+            resp = await ghl_request(
+                'DELETE',
+                f'/opportunities/{arguments.get("opportunityId")}',
+                params={'locationId': loc_id},
             )
             return [{'type': 'text', 'text': json.dumps(resp, indent=2)}]
 

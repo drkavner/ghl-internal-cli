@@ -1,141 +1,256 @@
-# GHL Internal API CLI / Skill
+# GHL Internal CLI
 
-This repository provides access to GoHighLevel's **internal** v2 API endpoints that are not exposed in the public REST API. It can be used in two ways:
-
-1. **As a Hermes MCP skill** – integrate with Hermes Agent (or any MCP-compatible host) to let Claude Code or another AI agent call GHL functions naturally.
-2. **As a standalone CLI** – invoke commands directly from a terminal to perform GHL operations (useful for scripting or quick ad‑hoc tasks).
-
-## Features
-
-- **Agent Studio** – create, list, get, execute, update, and promote AI agents.
-- **Conversation AI (AskAI / AI Employees)** – create, search, get, update, delete agents.
-- **Voice AI** – create, list, get, delete agents and retrieve call logs.
-- **Knowledge Base** – list, create, discover website content, train on discovered URLs.
-
-All endpoints are the same internal ones used by the GHL dashboard (`https://services.leadconnectorhq.com`).
-
-## Prerequisites
-
-- A GoHighLevel **Private Integration Token (PIT)** with sufficient permissions.
-- Your GoHighLevel **Location ID**.
-- Node.js ≥ 16 (for the TypeScript/Node version) **or** Python ≥ 3.8 (for the Python version).
-- (Optional) Git – to push this repo to your own GitHub account.
+A command-line interface for accessing GoHighLevel's internal APIs, built on top of the ghl-internal-cli MCP server.
 
 ## Installation
 
-Choose either the Node/TypeScript version or the Python version; both provide identical functionality.
-
-### Option A: Node/TypeScript (recommended for TypeScript fans)
-
-```bash
-# 1. Clone the repo
-git clone https://github.com/<your-username>/ghl-internal-cli.git
-cd ghl-internal-cli
-
-# 2. Install dependencies
-npm ci
-
-# 3. Build the TypeScript source
-npm run build   # compiles src/ → dist/
-```
-
-### Option B: Python
-
-```bash
-# 1. Clone the repo
-git clone https://github.com/<your-username>/ghl-internal-cli.git
-cd ghl-internal-cli
-
-# 2. Install dependencies
-pip install -r requirements.txt   # mcp, httpx
-```
-
-## Configuration
-
-Create a `.env` file in the repo root (or export the variables in your shell) with:
-
-```dotenv
-GHL_API_KEY=pit-<your-private-integration-token>
-GHL_LOCATION_ID=<your-location-id>
-```
-
-The CLI and MCP server will automatically strip the `pit-` prefix if present.
-
-## Usage as Hermes MCP Skill
-
-1. Copy the desired implementation into your Hermes profile's `skill-mcp` directory:
-
-   - **Node version**: copy the entire `ghl-internal-cli` folder to `~/.hermes/profiles/iris/skill-mcp/ghl-internal`.
-   - **Python version**: copy `server.py` and `requirements.txt` to `~/.hermes/profiles/iris/skill-mcp/ghl-internal-py` (or any name).
-
-2. Add an entry to `~/.hermes/config.yaml` under `mcp_servers`:
-
-   ```yaml
-   mcp_servers:
-     ghl-internal:
-       # ----- Node version -----
-       command: "node"
-       args: ["~/.hermes/profiles/iris/skill-mcp/ghl-internal/dist/index.js"]
-       env:
-         GHL_API_KEY: "pit-<your-private-integration-token>"
-         GHL_LOCATION_ID: "<your-location-id>"
-       # ----- Python version (uncomment to use) -----
-       # command: "python3"
-       # args: ["~/.hermes/profiles/iris/skill-mcp/ghl-internal-py/server.py"]
-       # env:
-       #   GHL_API_KEY: "pit-<your-private-integration-token>"
-       #   GHL_LOCATION_ID: "<your-location-id>"
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/drkavner/ghl-internal-cli.git
+   cd ghl-internal-cli
    ```
 
-3. Restart Hermes (or reload the MCP servers). You can now ask Claude Code / Hermes to:
+2. Install Python dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-   - “Create a new AI agent called ‘Support Helper’ in Agent Studio.”
-   - “List all my Voice AI agents.”
-   - “Create a knowledge base for my website content.”
-   - “Execute my AI agent with the message ‘Hello, how can I help you today?’”
+3. Set environment variables:
+   ```bash
+   export GHL_API_KEY=pit-your-private-integration-token
+   export GHL_LOCATION_ID=your-location-id
+   ```
 
-## Usage as Standalone CLI
+## Usage
 
-The repo includes a simple command‑line interface (`cli.py`) that wraps the same internal API calls.
-
+Run the CLI directly:
 ```bash
-# Make sure .env is sourced or variables are exported
-export GHL_API_KEY=pit-...
-export GHL_LOCATION_ID=...
-
-# Examples
-python cli.py agent create --name "Support Helper" --prompt "You are a helpful support bot." --welcomeMessage "Hi! How can I assist?"
-python cli.py agent list
-python cli.py voice create --name "Inbound Voice Bot" --prompt "Answer calls politely." --welcomeMessage "Thanks for calling!"
-python cli.py voice list
-python cli.py kb create --name "Website FAQ"
-python cli.py kb discover --knowledgeBaseId <kb-id> --url https://example.com/faq
-python cli.py kb train --knowledgeBaseId <kb-id> --urls '["https://example.com/faq","https://example.com/about"]'
+python3 cli.py <command> [options]
 ```
 
-Run `python cli.py --help` for the full list of subcommands and options.
+Or make it executable:
+```bash
+chmod +x cli.py
+./cli.py <command> [options]
+```
 
-## Architecture
+### Available Commands
 
-- **`server.py`** – Python implementation of an MCP server (stdio transport). Hermes (or any MCP host) connects to it via standard input/output.
-- **`src/index.ts`** – TypeScript implementation of an MCP server (uses `@modelcontextprotocol/sdk`). Compiled to `dist/index.js`.
-- **`cli.py`** – Simple Python CLI that directly calls the same internal API functions (does not require MCP). Useful for quick scripting or CI pipelines.
-- **Shared logic** – Both the MCP server and the CLI use the same low‑level `call_ghl_api` helper (Python) or `ghl.request` helper (Node) to talk to `https://services.leadconnectorhq.com`.
+#### Agent Studio
+- `agent-create` - Create a new AI agent
+  - `--agentName` (required) - Agent name
+  - `--agentPrompt` (required) - System prompt
+  - `--welcomeMessage` (required) - Welcome message
+  - `--locationId` (optional) - Location ID (uses GHL_LOCATION_ID if omitted)
 
-## Extending / Adding New Endpoints
+- `agent-list` - List all AI agents
+  - `--locationId` (optional) - Location ID
+  - `--limit` (default: 100) - Number of results
+  - `--offset` (default: 0) - Offset for pagination
 
-If you discover additional internal GHL endpoints (e.g., for a future “Vibe Coder” AIStudio feature), you can add them by:
+- `agent-get` - Get a specific agent by ID
+  - `--agentId` (required) - Agent ID
+  - `--locationId` (optional) - Location ID
 
-1. Adding a new **Tool** definition to the appropriate list (`TOOLS` in Python or `tools` array in TypeScript).
-2. Implementing the handler in the `handle_call_tool` / request handler, calling the existing low‑level request helper with the observed path, method, and payload.
-3. Re‑building (Node) or restarting (Python) the server.
+- `agent-execute` - Execute an AI agent
+  - `--agentId` (required) - Agent ID
+  - `--message` (required) - Message to send
+  - `--locationId` (optional) - Location ID
+  - `--executionId` (optional) - Session ID
 
-Because the MCP server exposes a standard `tools/list` endpoint, any MCP‑compatible host (including Hermes Agent, Claude Code with MCP support, or other agents) will automatically discover the new tools without further configuration.
+#### Conversation AI (AskAI / AI Employees)
+- `conv-create` - Create a Conversation AI agent
+  - `--agentName` (required) - Agent name
+  - `--agentRole` (required) - Agent role/purpose
+
+- `conv-search` - Search Conversation AI agents
+  - `--query` (required) - Search query
+  - `--limit` (default: 100) - Maximum results
+
+- `conv-get` - Get a Conversation AI agent by ID
+  - `--agentId` (required) - Agent ID
+
+- `conv-update` - Update a Conversation AI agent
+  - `--agentId` (required) - Agent ID
+  - `--agentName` (optional) - New agent name
+  - `--agentStatus` (optional) - New status (e.g., active, paused)
+
+- `conv-delete` - Delete a Conversation AI agent
+  - `--agentId` (required) - Agent ID
+
+#### Voice AI
+- `voice-create` - Create a Voice AI agent
+  - `--agentName` (required) - Agent name
+  - `--agentPrompt` (required) - Agent prompt
+  - `--welcomeMessage` (required) - Welcome message
+  - `--voiceId` (required) - Voice ID
+  - `--locationId` (optional) - Location ID
+
+- `voice-list` - List Voice AI agents
+  - `--locationId` (optional) - Location ID
+  - `--page` (default: 1) - Page number
+  - `--pageSize` (default: 20) - Page size
+
+- `voice-get` - Get a Voice AI agent by ID
+  - `--agentId` (required) - Agent ID
+  - `--locationId` (optional) - Location ID
+
+- `voice-delete` - Delete a Voice AI agent
+  - `--agentId` (required) - Agent ID
+  - `--locationId` (optional) - Location ID
+
+- `voice-logs` - Get Voice AI call logs
+  - `--agentId` (required) - Agent ID
+  - `--locationId` (optional) - Location ID
+  - `--page` (default: 1) - Page number
+  - `--pageSize` (default: 20) - Page size
+
+#### Knowledge Base
+- `kb-list` - List knowledge bases
+  - `--locationId` (optional) - Location ID
+
+- `kb-create` - Create a knowledge base
+  - `--name` (required) - Knowledge base name
+  - `--locationId` (optional) - Location ID
+
+- `kb-discover` - Discover website pages for training
+  - `--knowledgeBaseId` (required) - Knowledge base ID
+  - `--locationId` (optional) - Location ID
+  - `--url` (required) - URL to scan
+
+- `kb-train` - Train on discovered URLs
+  - `--knowledgeBaseId` (required) - Knowledge base ID
+  - `--locationId` (optional) - Location ID
+  - `--urls` (required, space-separated) - URLs to train on
+
+#### Vibe AI
+- `vibe-chat` - Get chat messages from a Vibe AI project
+  - `--projectId` (required) - Project ID
+  - `--limit` (default: 100) - Maximum messages
+  - `--offset` (default: 0) - Offset for pagination
+
+- `vibe-sandbox` - Keep Vibe AI sandbox alive
+  - `--projectId` (required) - Project ID
+
+#### Funnels
+- `funnel-create` - Create a funnel
+  - `--name` (required) - Funnel name
+  - `--description` (optional) - Funnel description
+
+- `funnel-step` - Create a funnel step
+  - `--funnelId` (required) - Funnel ID
+  - `--stepName` (required) - Step name
+  - `--stepType` (required) - Step type
+  - `--stepConfig` (optional) - Step configuration (JSON string)
+
+- `funnel-geo` - Set geo-location targeting for a funnel
+  - `--funnelId` (required) - Funnel ID
+  - `--latitude` (required) - Latitude
+  - `--longitude` (required) - Longitude
+  - `--radius` (required) - Radius in meters
+
+#### Feature Flags
+- `feature-flags` - Get feature flags for a location
+  - `--locationId` (optional) - Location ID
+
+#### Facebook Integration
+- `fb-connection` - Get Facebook connection for a location
+  - `--locationId` (optional) - Location ID
+
+- `fb-pages` - Get linked Facebook pages for a location
+  - `--locationId` (optional) - Location ID
+
+#### Chat Widget
+- `chat-widget` - Get chat widget settings
+  - `--locationId` (optional) - Location ID
+
+#### WhatsApp Phone Numbers
+- `whatsapp` - Get WhatsApp phone numbers for a location
+  - `--locationId` (optional) - Location ID
+
+#### Forms
+- `forms` - Get forms
+  - No arguments required
+
+#### Custom Values
+- `custom-values` - Get custom values for a location
+  - `--locationId` (optional) - Location ID
+
+#### Payments Currency
+- `payments-currency` - Get payment currencies
+  - No arguments required
+
+#### Social Media Accounts
+- `social-media` - Get social media accounts for a location
+  - `--locationId` (optional) - Location ID
+
+#### Templates
+- `templates` - Get list of templates
+  - No arguments required
+
+## Examples
+
+```bash
+# Create an AI agent
+python3 cli.py agent-create --agentName "Support Bot" --agentPrompt "You are a helpful support agent." --welcomeMessage "Hello! How can I help you today?"
+
+# List Voice AI agents
+python3 cli.py voice-list
+
+# Get chat messages from a Vibe AI project
+python3 cli.py vibe-chat --projectId "your-project-id-here"
+
+# Create a funnel
+python3 cli.py funnel-create --name "Sales Funnel" --description "Funnel for converting leads to customers"
+
+# Create a funnel step
+python3 cli.py funnel-step --funnelId "your-funnel-id" --stepName "Email Sequence" --stepType "email" --stepConfig '{"emailTemplateId": "abc123"}'
+
+# Set geo-location for a funnel
+python3 cli.py funnel-geo --funnelId "your-funnel-id" --latitude 40.7128 --longitude -74.0060 --radius 10000
+
+# Get feature flags
+python3 cli.py feature-flags
+
+# Get Facebook connection
+python3 cli.py fb-connection
+
+# Get WhatsApp phone numbers
+python3 cli.py whatsapp
+
+# Get forms
+python3 cli.py forms
+
+# Get custom values
+python3 cli.py custom-values
+
+# Get payment currencies
+python3 cli.py payments-currency
+
+# Get social media accounts
+python3 cli.py social-media
+
+# Get templates
+python3 cli.py templates
+```
+
+## Notes
+
+- All commands that require a location ID will use the `GHL_LOCATION_ID` environment variable if not explicitly provided.
+- For commands that accept JSON (like `--stepConfig`), pass a valid JSON string.
+- The CLI outputs JSON responses directly to stdout for easy processing with tools like `jq`.
+
+## Error Handling
+
+The CLI will exit with code 1 and print an error message to stderr if:
+- Required arguments are missing
+- The API returns an error (non-2xx status code)
+- An unexpected exception occurs
+
+## Integration with Hermes Agent
+
+This CLI shares the same underlying API logic as the MCP server (`server.py`). For use with Hermes Agent, prefer the MCP server integration as it provides native tool discovery and invocation capabilities.
 
 ## License
 
-MIT – feel free to fork, modify, and distribute.
-
-## Acknowledgements
-
-Built upon the GHL API exploration performed with Hermes Agent. Inspired by the official `@gohighlevel/api-client` package and the Model Context Protocol specification.
+MIT
